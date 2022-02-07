@@ -5,6 +5,7 @@ const req = require("express/lib/request")
 const { param } = require("express/lib/request")
 const cors = require("cors")
 const { Hub, sseHub } = require("@toverux/expresse")
+var Request = require("request");
 
 //Server stuff
 //========================================================================================================
@@ -15,11 +16,13 @@ app.use(cors())
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
-app.get('/status', (request, response) => response.json({clients: clients.length}));
+app.get("/status", (request, response) =>
+  response.json({ clients: clients.length })
+)
 
-const PORT = 3000;
+const PORT = 3000
 
-let clients = [];
+let clients = []
 
 app.listen(PORT, () => {
   console.log(`Service listening at http://localhost:${PORT}/server`)
@@ -43,29 +46,32 @@ app.get("/server/requestToken", function (req, res) {
   //recepe parametros pela URL
   var parametros = req.originalUrl.split("?")
   parametros = parametros[1].split("&")
- 
-
+  //clients.push(parametros[3])
   //Utiliza os parametros para decidir qual recurso deve ser gerado o token
   if (parametros[0].localeCompare("recurso=1") == 0) {
     if (token1 == null) {
       token1 = getRandomString(5)
       res.send(token1) //envia para o cliente
-    } else if (!fila1.includes(res)) {
-      fila1.push(res)
-    } //adiciona a fila de espera
+    } else if (fila1.entries() == 0) {
+      fila1.push(parametros[1])
+    } else if (!fila1.includes(parametros[1])) {
+      fila1.push(parametros[1])
+      res.send("Finalizado")
+    }
   } else if (parametros[0].localeCompare("recurso=2") == 0) {
     if (token2 == null) {
       token2 = getRandomString(5)
-      res.send(token2) //envia ao cliente
-    } else if (!fila2.includes(res)) {
-      fila2.push(res)
-      //adiciona o cliente a fila de espera
+      res.send(token2)
+    } else if (fila2.entries() == 0) {
+      fila2.push(parametros[1])
+    } else if (!fila2.includes(parametros[1])) {
+      fila2.push(parametros[1])
+      res.send("Finalizado")
     }
   }
   clients.push(parametros[1])
-  res.send('Finalizado')
-    
   
+
   console.log("=================REQUEST TOKEN====================== ")
   console.log("Token1: " + token1)
   console.log("Token2: " + token2)
@@ -75,18 +81,19 @@ app.get("/server/requestToken", function (req, res) {
 
 //========================================================================================================================
 //LIBERA O TOKEN CRIADO
-app.get("/server/releaseToken", function(req,res){
+app.get("/server/releaseToken", function (req, res) {
+  
   var parametros = req.originalUrl.split("?")
   parametros = parametros[1].split("&")
 
   if (parametros[0].localeCompare("recurso=1") == 0) {
-    console.log(req.hostname)
+    token1 = null
+    //clients.at(clienteAtual[1])
   } else if (parametros[0].localeCompare("recurso=2") == 0) {
-    console.log(req.headers.origin)
-    
+    token2 = null
   }
   clients.push(parametros[1])
-  res.send('Finalizado')
+  res.send("Finalizado")
 })
 
 //========================================================================================================================
